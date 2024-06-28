@@ -1,4 +1,6 @@
 module Crypto
+  alias WordBlock = StaticArray(UInt32, 16)
+
   # The ChaCha20 cipheris a high-speed cipher
   # It is considerably faster than AES in software-only
   # implementations, making it around three times as fast on
@@ -21,32 +23,34 @@ module Crypto
     # * counter: A 32-bit block count parameter, treated as a 32-bit little-endian
     #   integer.
     def initialize(key : Bytes, nonce : Bytes, counter : UInt32 = 0_u32)
-      @state = Array(UInt32).new(16)
+      @state = WordBlock.new(0_u32)
       @block_state = Array(UInt32).new(16) { 0_u32 }
 
+      i = -1
+
       # Constants
-      @state << 0x61707865
-      @state << 0x3320646e
-      @state << 0x79622d32
-      @state << 0x6b206574
+      @state[i += 1] = 0x61707865
+      @state[i += 1] = 0x3320646e
+      @state[i += 1] = 0x79622d32
+      @state[i += 1] = 0x6b206574
 
       # Key
-      @state << IO::ByteFormat::LittleEndian.decode(UInt32, key[0, 4])
-      @state << IO::ByteFormat::LittleEndian.decode(UInt32, key[4, 4])
-      @state << IO::ByteFormat::LittleEndian.decode(UInt32, key[8, 4])
-      @state << IO::ByteFormat::LittleEndian.decode(UInt32, key[12, 4])
-      @state << IO::ByteFormat::LittleEndian.decode(UInt32, key[16, 4])
-      @state << IO::ByteFormat::LittleEndian.decode(UInt32, key[20, 4])
-      @state << IO::ByteFormat::LittleEndian.decode(UInt32, key[24, 4])
-      @state << IO::ByteFormat::LittleEndian.decode(UInt32, key[28, 4])
+      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, key[0, 4])
+      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, key[4, 4])
+      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, key[8, 4])
+      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, key[12, 4])
+      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, key[16, 4])
+      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, key[20, 4])
+      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, key[24, 4])
+      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, key[28, 4])
 
       # Counter
-      @state << counter
+      @state[i += 1] = counter
 
       # Nonce
-      @state << IO::ByteFormat::LittleEndian.decode(UInt32, nonce[0, 4])
-      @state << IO::ByteFormat::LittleEndian.decode(UInt32, nonce[4, 4])
-      @state << IO::ByteFormat::LittleEndian.decode(UInt32, nonce[8, 4])
+      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, nonce[0, 4])
+      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, nonce[4, 4])
+      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, nonce[8, 4])
     end
 
     def encrypt(plaintext : String)
@@ -56,7 +60,13 @@ module Crypto
     def encrypt(plaintext : Text)
       encrypted = Text.new(plaintext.size)
       plaintext.each_block(64) do |plaintext_block|
-        plaintext_block.xor(next_key_block)
+        key_block = next_key_block
+        16.times do |i|
+          plaintext_block[i*4] ^= (key_block[i] >> 0 * 8) & 0xff_u8
+          plaintext_block[i*4 + 1] ^= (key_block[i] >> 1 * 8) & 0xff_u8
+          plaintext_block[i*4 + 2] ^= (key_block[i] >> 2 * 8) & 0xff_u8
+          plaintext_block[i*4 + 3] ^= (key_block[i] >> 3 * 8) & 0xff_u8
+        end
         encrypted << plaintext_block
       end
       encrypted
@@ -106,15 +116,15 @@ module Crypto
       @block_state
     end
 
-    def quarter_round(state : Array(UInt32), a : Int32, b : Int32, c : Int32, d : Int32)
-      state[a] &+= state[b]
-      state[d] = (state[d] ^ state[a]).rotl(16)
-      state[c] &+= state[d]
-      state[b] = (state[b] ^ state[c]).rotl(12)
-      state[a] &+= state[b]
-      state[d] = (state[d] ^ state[a]).rotl(8)
-      state[c] &+= state[d]
-      state[b] = (state[b] ^ state[c]).rotl(7)
+    macro quarter_round(state, a, b, c, d)
+      {{state}}[{{a}}] &+= {{state}}[{{b}}]
+      {{state}}[{{d}}] =  ({{state}}[{{d}}] ^ {{state}}[{{a}}]).rotl(16)
+      {{state}}[{{c}}] &+= {{state}}[{{d}}]
+      {{state}}[{{b}}] =  ({{state}}[{{b}}] ^ {{state}}[{{c}}]).rotl(12)
+      {{state}}[{{a}}] &+= {{state}}[{{b}}]
+      {{state}}[{{d}}] =  ({{state}}[{{d}}] ^ {{state}}[{{a}}]).rotl(8)
+      {{state}}[{{c}}] &+= {{state}}[{{d}}]
+      {{state}}[{{b}}] =  ({{state}}[{{b}}] ^ {{state}}[{{c}}]).rotl(7)
     end
 
     def to_hex : String

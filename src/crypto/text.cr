@@ -42,11 +42,11 @@ module Crypto
     end
 
     def xor(other : Array(UInt32))
-      other.each_with_index do |val, i|
-        @raw[i*4] ^= (val >> 0 * 8) & 0xff_u8
-        @raw[i*4 + 1] ^= (val >> 1 * 8) & 0xff_u8
-        @raw[i*4 + 2] ^= (val >> 2 * 8) & 0xff_u8
-        @raw[i*4 + 3] ^= (val >> 3 * 8) & 0xff_u8
+      16.times do |i|
+        @raw[i*4] ^= (other[i] >> 0 * 8) & 0xff_u8
+        @raw[i*4 + 1] ^= (other[i] >> 1 * 8) & 0xff_u8
+        @raw[i*4 + 2] ^= (other[i] >> 2 * 8) & 0xff_u8
+        @raw[i*4 + 3] ^= (other[i] >> 3 * 8) & 0xff_u8
       end
     end
 
