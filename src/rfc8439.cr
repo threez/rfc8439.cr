@@ -1,4 +1,3 @@
-require "./crypto/number"
 require "./crypto/chacha20"
 
 module Rfc8439

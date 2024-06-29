@@ -24,33 +24,31 @@ module Crypto
     #   integer.
     def initialize(key : Bytes, nonce : Bytes, counter : UInt32 = 0_u32)
       @state = WordBlock.new(0_u32)
-      @block_state = Array(UInt32).new(16) { 0_u32 }
-
-      i = -1
+      @block_state = WordBlock.new(0_u32)
 
       # Constants
-      @state[i += 1] = 0x61707865
-      @state[i += 1] = 0x3320646e
-      @state[i += 1] = 0x79622d32
-      @state[i += 1] = 0x6b206574
+      @state[0] = 0x61707865
+      @state[1] = 0x3320646e
+      @state[2] = 0x79622d32
+      @state[3] = 0x6b206574
 
       # Key
-      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, key[0, 4])
-      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, key[4, 4])
-      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, key[8, 4])
-      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, key[12, 4])
-      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, key[16, 4])
-      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, key[20, 4])
-      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, key[24, 4])
-      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, key[28, 4])
+      @state[4] = IO::ByteFormat::LittleEndian.decode(UInt32, key[0, 4])
+      @state[5] = IO::ByteFormat::LittleEndian.decode(UInt32, key[4, 4])
+      @state[6] = IO::ByteFormat::LittleEndian.decode(UInt32, key[8, 4])
+      @state[7] = IO::ByteFormat::LittleEndian.decode(UInt32, key[12, 4])
+      @state[8] = IO::ByteFormat::LittleEndian.decode(UInt32, key[16, 4])
+      @state[9] = IO::ByteFormat::LittleEndian.decode(UInt32, key[20, 4])
+      @state[10] = IO::ByteFormat::LittleEndian.decode(UInt32, key[24, 4])
+      @state[11] = IO::ByteFormat::LittleEndian.decode(UInt32, key[28, 4])
 
       # Counter
-      @state[i += 1] = counter
+      @state[12] = counter
 
       # Nonce
-      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, nonce[0, 4])
-      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, nonce[4, 4])
-      @state[i += 1] = IO::ByteFormat::LittleEndian.decode(UInt32, nonce[8, 4])
+      @state[13] = IO::ByteFormat::LittleEndian.decode(UInt32, nonce[0, 4])
+      @state[14] = IO::ByteFormat::LittleEndian.decode(UInt32, nonce[4, 4])
+      @state[15] = IO::ByteFormat::LittleEndian.decode(UInt32, nonce[8, 4])
     end
 
     def encrypt(plaintext : Bytes) : Bytes
@@ -96,14 +94,14 @@ module Crypto
 
       # perform inner blocks 10 times
       10.times do
-        quarter_round(block_state, 0, 4, 8, 12)
-        quarter_round(block_state, 1, 5, 9, 13)
-        quarter_round(block_state, 2, 6, 10, 14)
-        quarter_round(block_state, 3, 7, 11, 15)
-        quarter_round(block_state, 0, 5, 10, 15)
-        quarter_round(block_state, 1, 6, 11, 12)
-        quarter_round(block_state, 2, 7, 8, 13)
-        quarter_round(block_state, 3, 4, 9, 14)
+        quarter_round(block_state.to_slice, 0, 4, 8, 12)
+        quarter_round(block_state.to_slice, 1, 5, 9, 13)
+        quarter_round(block_state.to_slice, 2, 6, 10, 14)
+        quarter_round(block_state.to_slice, 3, 7, 11, 15)
+        quarter_round(block_state.to_slice, 0, 5, 10, 15)
+        quarter_round(block_state.to_slice, 1, 6, 11, 12)
+        quarter_round(block_state.to_slice, 2, 7, 8, 13)
+        quarter_round(block_state.to_slice, 3, 4, 9, 14)
       end
 
       # apply state to block state
@@ -117,15 +115,22 @@ module Crypto
       block_state
     end
 
-    macro quarter_round(state, a, b, c, d)
-      {{state}}[{{a}}] &+= {{state}}[{{b}}]
-      {{state}}[{{d}}] =  ({{state}}[{{d}}] ^ {{state}}[{{a}}]).rotl(16)
-      {{state}}[{{c}}] &+= {{state}}[{{d}}]
-      {{state}}[{{b}}] =  ({{state}}[{{b}}] ^ {{state}}[{{c}}]).rotl(12)
-      {{state}}[{{a}}] &+= {{state}}[{{b}}]
-      {{state}}[{{d}}] =  ({{state}}[{{d}}] ^ {{state}}[{{a}}]).rotl(8)
-      {{state}}[{{c}}] &+= {{state}}[{{d}}]
-      {{state}}[{{b}}] =  ({{state}}[{{b}}] ^ {{state}}[{{c}}]).rotl(7)
+    def quarter_round(state : Slice(UInt32), a, b, c, d)
+      state[a] &+= state[b]
+      state[d] = rotl((state[d] ^ state[a]), 16)
+      state[c] &+= state[d]
+      state[b] = rotl((state[b] ^ state[c]), 12)
+      state[a] &+= state[b]
+      state[d] = rotl((state[d] ^ state[a]), 8)
+      state[c] &+= state[d]
+      state[b] = rotl((state[b] ^ state[c]), 7)
+    end
+
+    # bitwise rotation (or circular shift) operation. It’s named rotl,
+    # which stands for “rotate left {{n}}-bit”.
+    # The rotation is performed by n places.
+    macro rotl(v, n)
+      ({{v}} << {{n}}) | ({{v}} >> (32_u32 - {{n}}))
     end
   end
 end
