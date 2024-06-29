@@ -6,8 +6,8 @@ describe Crypto::ChaCha20 do
     nonce = "00:00:00:09:00:00:00:4a:00:00:00:00"
     chipher = Crypto::ChaCha20.new(key, nonce, 1)
 
-    chipher.next_key_block
-    chipher.to_hex.should eq(Crypto.only_hex("
+    bs = chipher.next_key_block(Crypto::WordBlock.new(0u32))
+    Crypto.to_hex(bs).should eq(Crypto.only_hex("
       e4e7f110  15593bd1  1fdd0f50  c47120a3
       c7f4d1c7  0368c033  9aaa2204  4e6cd4c3
       466482d2  09aa9f07  05d7c214  a2028bd9
@@ -20,7 +20,7 @@ describe Crypto::ChaCha20 do
     nonce = "00:00:00:00:00:00:00:4a:00:00:00:00"
     chipher = Crypto::ChaCha20.new(key, nonce, 1)
 
-    result = chipher.encrypt(Crypto::Text.new("
+    result = chipher.encrypt(Crypto.parse_hex("
       4c 61 64 69 65 73 20 61 6e 64 20 47 65 6e 74 6c
       65 6d 65 6e 20 6f 66 20 74 68 65 20 63 6c 61 73
       73 20 6f 66 20 27 39 39 3a 20 49 66 20 49 20 63
@@ -31,7 +31,7 @@ describe Crypto::ChaCha20 do
       74 2e
     "))
 
-    result.to_hex.should eq(Crypto::Text.new("
+    Crypto.to_hex(result).should eq(Crypto.only_hex("
       6e 2e 35 9a 25 68 f9 80 41 ba 07 28 dd 0d 69 81
       e9 7e 7a ec 1d 43 60 c2 0a 27 af cc fd 9f ae 0b
       f9 1b 65 c5 52 47 33 ab 8f 59 3d ab cd 62 b3 57
@@ -40,11 +40,11 @@ describe Crypto::ChaCha20 do
       52 bc 51 4d 16 cc f8 06 81 8c e9 1a b7 79 37 36
       5a f9 0b bf 74 a3 5b e6 b4 0b 8e ed f2 78 5e 42
       87 4d
-    ").to_hex)
+    "))
 
     # chipher = Crypto::ChaCha20.new(key, nonce, 1)
     # result = chipher.encrypt("Ladies and Gentlemen of the class of '99: If I could offer you only one tip forthe future, sunscreen would be it.")
-    # result.to_hex.should eq(Crypto::Text.new("
+    # Crypto.to_hex(result).should eq(Crypto.parse_hex("
     #   6e 2e 35 9a 25 68 f9 80 41 ba 07 28 dd 0d 69 81
     #   e9 7e 7a ec 1d 43 60 c2 0a 27 af cc fd 9f ae 0b
     #   f9 1b 65 c5 52 47 33 ab 8f 59 3d ab cd 62 b3 57
@@ -62,8 +62,8 @@ describe Crypto::ChaCha20 do
       nonce = "00 00 00 00 00 00 00 00 00 00 00 00"
       chipher = Crypto::ChaCha20.new(key, nonce, 0)
 
-      chipher.next_key_block
-      chipher.to_hex.should eq(Crypto.only_hex("
+      bs = chipher.next_key_block(Crypto::WordBlock.new(0u32))
+      Crypto.to_hex(bs).should eq(Crypto.only_hex("
         ade0b876  903df1a0  e56a5d40  28bd8653
         b819d2bd  1aed8da0  ccef36a8  c70d778b
         7c5941da  8d485751  3fe02477  374ad8b8
@@ -76,8 +76,8 @@ describe Crypto::ChaCha20 do
       nonce = "00 00 00 00 00 00 00 00 00 00 00 00"
       chipher = Crypto::ChaCha20.new(key, nonce, 1)
 
-      chipher.next_key_block
-      chipher.to_hex.should eq(Crypto.only_hex("
+      bs = chipher.next_key_block(Crypto::WordBlock.new(0u32))
+      Crypto.to_hex(bs).should eq(Crypto.only_hex("
         bee7079f  7a385155  7c97ba98  0d082d73
         a0290fcb  6965e348  3e53c612  ed7aee32
         7621b729  434ee69c  b03371d5  d539d874
@@ -90,8 +90,8 @@ describe Crypto::ChaCha20 do
       nonce = "00 00 00 00 00 00 00 00 00 00 00 00"
       chipher = Crypto::ChaCha20.new(key, nonce, 1)
 
-      chipher.next_key_block
-      chipher.to_hex.should eq(Crypto.only_hex("
+      bs = chipher.next_key_block(Crypto::WordBlock.new(0u32))
+      Crypto.to_hex(bs).should eq(Crypto.only_hex("
         2452eb3a  9249f8ec  8d829d9b  ddd4ceb1
         e8252083  60818b01  f38422b8  5aaa49c9
         bb00ca8e  da3ba7b4  c4b592d1  fdf2732f
@@ -104,8 +104,8 @@ describe Crypto::ChaCha20 do
       nonce = "00 00 00 00 00 00 00 00 00 00 00 00"
       chipher = Crypto::ChaCha20.new(key, nonce, 2)
 
-      chipher.next_key_block
-      chipher.to_hex.should eq(Crypto.only_hex("
+      bs = chipher.next_key_block(Crypto::WordBlock.new(0u32))
+      Crypto.to_hex(bs).should eq(Crypto.only_hex("
         fb4dd572  4bc42ef1  df922636  327f1394
         a78dea8f  5e269039  a1bebbc1  caf09aae
         a25ab213  48a6b46c  1b9d9bcb  092c5be6
@@ -118,8 +118,8 @@ describe Crypto::ChaCha20 do
       nonce = "00 00 00 00 00 00 00 00 00 00 00 02"
       chipher = Crypto::ChaCha20.new(key, nonce, 0)
 
-      chipher.next_key_block
-      chipher.to_hex.should eq(Crypto.only_hex("
+      bs = chipher.next_key_block(Crypto::WordBlock.new(0u32))
+      Crypto.to_hex(bs).should eq(Crypto.only_hex("
         374dc6c2  3736d58c  b904e24a  cd3f93ef
         88228b1a  96a4dfb3  5b76ab72  c727ee54
         0e0e978a  f3145c95  1b748ea8  f786c297
@@ -134,19 +134,19 @@ describe Crypto::ChaCha20 do
       nonce = "00 00 00 00 00 00 00 00 00 00 00 00"
       chipher = Crypto::ChaCha20.new(key, nonce, 0)
 
-      result = chipher.encrypt(Crypto::Text.new("
+      result = chipher.encrypt(Crypto.parse_hex("
         00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
         00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
         00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
         00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
       "))
 
-      result.to_hex.should eq(Crypto::Text.new("
+      Crypto.to_hex(result).should eq(Crypto.only_hex("
         76 b8 e0 ad a0 f1 3d 90 40 5d 6a e5 53 86 bd 28
         bd d2 19 b8 a0 8d ed 1a a8 36 ef cc 8b 77 0d c7
         da 41 59 7c 51 57 48 8d 77 24 e0 3f b8 d8 4a 37
         6a 43 b8 f4 15 18 a1 1c c3 87 b6 69 b2 ee 65 86
-      ").to_hex)
+      "))
     end
 
     it "Test Vector #2" do
@@ -154,7 +154,7 @@ describe Crypto::ChaCha20 do
       nonce = "00 00 00 00 00 00 00 00 00 00 00 02"
       chipher = Crypto::ChaCha20.new(key, nonce, 1)
 
-      result = chipher.encrypt(Crypto::Text.new("
+      result = chipher.encrypt(Crypto.parse_hex("
         41 6e 79 20 73 75 62 6d 69 73 73 69 6f 6e 20 74
         6f 20 74 68 65 20 49 45 54 46 20 69 6e 74 65 6e
         64 65 64 20 62 79 20 74 68 65 20 43 6f 6e 74 72
@@ -181,7 +181,7 @@ describe Crypto::ChaCha20 do
         73 73 65 64 20 74 6f
       "))
 
-      result.to_hex.should eq(Crypto::Text.new("
+      Crypto.to_hex(result).should eq(Crypto.only_hex("
         a3 fb f0 7d f3 fa 2f de 4f 37 6c a2 3e 82 73 70
         41 60 5d 9f 4f 4f 57 bd 8c ff 2c 1d 4b 79 55 ec
         2a 97 94 8b d3 72 29 15 c8 f3 d3 37 f7 d3 70 05
@@ -206,7 +206,7 @@ describe Crypto::ChaCha20 do
         14 ea 99 82 cc af b3 41 b2 38 4d d9 02 f3 d1 ab
         7a c6 1d d2 9c 6f 21 ba 5b 86 2f 37 30 e3 7c fd
         c4 fd 80 6c 22 f2 21
-      ").to_hex)
+      "))
     end
 
     it "Test Vector #3" do
@@ -214,7 +214,7 @@ describe Crypto::ChaCha20 do
       nonce = "00 00 00 00 00 00 00 00 00 00 00 02"
       chipher = Crypto::ChaCha20.new(key, nonce, 42)
 
-      result = chipher.encrypt(Crypto::Text.new("
+      result = chipher.encrypt(Crypto.parse_hex("
         27 54 77 61 73 20 62 72 69 6c 6c 69 67 2c 20 61
         6e 64 20 74 68 65 20 73 6c 69 74 68 79 20 74 6f
         76 65 73 0a 44 69 64 20 67 79 72 65 20 61 6e 64
@@ -225,7 +225,7 @@ describe Crypto::ChaCha20 do
         72 61 74 68 73 20 6f 75 74 67 72 61 62 65 2e
       "))
 
-      result.to_hex.should eq(Crypto::Text.new("
+      Crypto.to_hex(result).should eq(Crypto.only_hex("
         62 e6 34 7f 95 ed 87 a4 5f fa e7 42 6f 27 a1 df
         5f b6 91 10 04 4c 0d 73 11 8e ff a9 5b 01 e5 cf
         16 6d 3d f2 d7 21 ca f9 b2 1e 5f b1 4c 61 68 71
@@ -234,7 +234,7 @@ describe Crypto::ChaCha20 do
         1a 55 32 05 57 16 ea d6 96 25 68 f8 7d 3f 3f 77
         04 c6 a8 d1 bc d1 bf 4d 50 d6 15 4b 6d a7 31 b1
         87 b5 8d fd 72 8a fa 36 75 7a 79 7a c1 88 d1
-      ").to_hex)
+      "))
     end
   end
 end
