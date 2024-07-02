@@ -1,8 +1,8 @@
 require "benchmark"
 require "../src/rfc8439"
 
-key = "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
-nonce = "00 00 00 00 00 00 00 00 00 00 00 00"
+key = Bytes.new(32, 0x00)
+nonce = Bytes.new(12, 0x00)
 plaintext = Bytes.new(1024**2)
 encrypted = Bytes.new(1024**2)
 

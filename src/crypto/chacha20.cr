@@ -1,6 +1,4 @@
 module Crypto
-  alias WordBlock = StaticArray(UInt32, 16)
-
   # The ChaCha20 cipheris a high-speed cipher
   # It is considerably faster than AES in software-only
   # implementations, making it around three times as fast on
@@ -8,12 +6,6 @@ module Crypto
   # ChaCha20 is also not sensitive to timing attacks.
   class ChaCha20
     BLOCK_SIZE = 64
-
-    def initialize(key : String, nonce : String, counter : UInt32 = 0_u32)
-      key = Crypto.only_hex(key).hexbytes
-      nonce = Crypto.only_hex(nonce).hexbytes
-      initialize(key, nonce, counter)
-    end
 
     # The inputs to ChaCha20 are:
     # * key: A 256-bit key, treated as a concatenation of eight 32-bit little-
@@ -23,8 +15,11 @@ module Crypto
     # * counter: A 32-bit block count parameter, treated as a 32-bit little-endian
     #   integer.
     def initialize(key : Bytes, nonce : Bytes, counter : UInt32 = 0_u32)
-      @state = WordBlock.new(0_u32)
-      @block_state = WordBlock.new(0_u32)
+      raise "key needs to be 32 bytes (256 bits)" unless key.size == 32
+      raise "nonce needs to be 12 bytes (96 bits)" unless nonce.size == 12
+
+      @state = StaticArray(UInt32, 16).new(0_u32)
+      @block_state = StaticArray(UInt32, 16).new(0_u32)
 
       # Constants
       @state[0] = 0x61707865
@@ -52,17 +47,18 @@ module Crypto
     end
 
     def encrypt(plaintext : Bytes) : Bytes
-      encrypted = Bytes.new(plaintext.size + plaintext.size % BLOCK_SIZE)
+      # caclulate block size based on plaintext
+      size = plaintext.size + (BLOCK_SIZE - plaintext.size % BLOCK_SIZE)
+      encrypted = Bytes.new(size, 0x00)
       encrypt(plaintext, encrypted)
       encrypted[0, plaintext.size]
     end
 
+    # reads from plaintext and writes to encrypted
     def encrypt(plaintext : Bytes, encrypted : Bytes) : Nil
-      # if (encrypted.size % BLOCK_SIZE) != 0
-      #   raise "encrypted needs to be multiple of #{BLOCK_SIZE} but is #{encrypted.size}"
-      # end
+      raise "encrypted needs to be multiple of #{BLOCK_SIZE}" unless encrypted.size % BLOCK_SIZE == 0
 
-      block_state = WordBlock.new(0u32)
+      block_state = StaticArray(UInt32, 16).new(0u32)
       Intrinsics.memcpy(encrypted.to_unsafe, plaintext.to_unsafe, plaintext.size, false)
 
       (encrypted.size // BLOCK_SIZE).times do |pos|
@@ -88,7 +84,8 @@ module Crypto
       end
     end
 
-    def next_key_block(block_state : WordBlock) : WordBlock
+    # returns the next key block
+    def next_key_block(block_state : StaticArray(UInt32, 16) = StaticArray(UInt32, 16).new(0u32)) : StaticArray(UInt32, 16)
       # initialize block state
       Intrinsics.memcpy(block_state.to_unsafe, @state.to_unsafe, BLOCK_SIZE, false)
 
@@ -115,7 +112,7 @@ module Crypto
       block_state
     end
 
-    def quarter_round(state : Slice(UInt32), a, b, c, d)
+    private def quarter_round(state : Slice(UInt32), a, b, c, d)
       state[a] &+= state[b]
       state[d] = rotl((state[d] ^ state[a]), 16)
       state[c] &+= state[d]
