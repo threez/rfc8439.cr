@@ -46,6 +46,17 @@ module Crypto
       @state[15] = IO::ByteFormat::LittleEndian.decode(UInt32, nonce[8, 4])
     end
 
+    # The inputs to ChaCha20 are:
+    # * key: A 256-bit key, treated as a concatenation of eight 32-bit little-
+    #   endian integers. (**hex encoded**)
+    # * nonce: A 96-bit nonce, treated as a concatenation of three 32-bit little-
+    #   endian integers. (**hex encoded**)
+    # * counter: A 32-bit block count parameter, treated as a 32-bit little-endian
+    #   integer.
+    def initialize(key : String, nonce : String, counter : UInt32 = 0_u32)
+      initialize(Crypto::Hex.bytes(key), Crypto::Hex.bytes(nonce), counter)
+    end
+
     def encrypt(plaintext : Bytes) : Bytes
       # caclulate block size based on plaintext
       size = plaintext.size + (BLOCK_SIZE - plaintext.size % BLOCK_SIZE)
@@ -84,6 +95,7 @@ module Crypto
       end
     end
 
+    # :nodoc:
     # returns the next key block
     def next_key_block(block_state : StaticArray(UInt32, 16) = StaticArray(UInt32, 16).new(0u32)) : StaticArray(UInt32, 16)
       # initialize block state
