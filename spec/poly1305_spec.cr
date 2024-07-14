@@ -47,4 +47,16 @@ describe Crypto::Poly1305 do
       to_hex(tag).should eq(only_hex("a8:06:1d:c1:30:51:36:c6:c2:2b:8b:af:0c:01:27:a9"))
     end
   end
+
+  describe ".chacha20" do
+    it "should generate a poly1305 based of a chacha20 key and nonce" do
+      key = Crypto::Hex.bytes("80 81 82 83 84 85 86 87 88 89 8a 8b 8c 8d 8e 8f 90 91 92 93 94 95 96 97 98 99 9a 9b 9c 9d 9e 9f")
+      nonce = Crypto::Hex.bytes("00 00 00 00 00 01 02 03 04 05 06 07")
+      mac = Crypto::Poly1305.chacha20(key, nonce)
+      msg = "Cryptographic Forum Research Group".to_slice
+      mac.update(msg)
+      tag = mac.final
+      to_hex(tag).should eq(only_hex("92:65:cf:2a:a8:f4:4c:e9:bd:db:92:2b:3d:65:0e:7c"))
+    end
+  end
 end

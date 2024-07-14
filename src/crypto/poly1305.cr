@@ -1,4 +1,5 @@
 require "big"
+require "./chacha20"
 
 module Crypto
   class Poly1305
@@ -12,6 +13,17 @@ module Crypto
     @r : BigInt
     @a : BigInt
     @s : BigInt
+
+    # Generating the Poly1305 Key Using ChaCha20
+    def self.chacha20(key : Bytes, nonce : Bytes) : Poly1305
+      chacha20(ChaCha20.new(key, nonce))
+    end
+
+    # Generating the Poly1305 Key Using ChaCha20
+    def self.chacha20(cipher : ChaCha20) : Poly1305
+      block = ChaCha20.block_bytes(cipher.clone.next_key_block, false)
+      new(block[0..31])
+    end
 
     # Initializes the Poly1305 context with a given 32-byte key.
     # The key should be used only once per message and then discarded.

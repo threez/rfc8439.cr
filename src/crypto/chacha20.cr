@@ -57,6 +57,20 @@ module Crypto
       initialize(Crypto::Hex.bytes(key), Crypto::Hex.bytes(nonce), counter)
     end
 
+    # Directly initialize using the state
+    def initialize(state : StaticArray(UInt32, 16))
+      @block_state = StaticArray(UInt32, 16).new(0_u32)
+      @state = StaticArray(UInt32, 16).new do |i|
+        state[i]
+      end
+    end
+
+    # create a clone from the state
+    def clone
+      self.class.new(@state)
+    end
+
+    # encrypt the plaintext retuns the encrypted bytes
     def encrypt(plaintext : Bytes) : Bytes
       # caclulate block size based on plaintext
       size = plaintext.size + (BLOCK_SIZE - plaintext.size % BLOCK_SIZE)
@@ -135,11 +149,27 @@ module Crypto
       state[b] = rotl((state[b] ^ state[c]), 7)
     end
 
+    # :nodoc:
     # bitwise rotation (or circular shift) operation. It’s named rotl,
     # which stands for “rotate left {{n}}-bit”.
     # The rotation is performed by n places.
     macro rotl(v, n)
       ({{v}} << {{n}}) | ({{v}} >> (32_u32 - {{n}}))
+    end
+
+    # :nodoc:
+    # converts a block to bytes
+    def self.block_bytes(block : StaticArray(UInt32, 16), be : Bool = true) : Bytes
+      block_bytes = Bytes.new(block.size * 4)
+      block.each_with_index do |val, i|
+        block_slice = block_bytes[(i*4)..((i + 1)*4 - 1)]
+        if be
+          IO::ByteFormat::BigEndian.encode(val, block_slice)
+        else
+          IO::ByteFormat::LittleEndian.encode(val, block_slice)
+        end
+      end
+      block_bytes
     end
   end
 end
