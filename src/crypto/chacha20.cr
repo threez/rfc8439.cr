@@ -71,7 +71,7 @@ class Crypto::ChaCha20
     klone
   end
 
-  # encrypt the plaintext retuns the encrypted bytes
+  # encrypt the plaintext returns the encrypted bytes
   def encrypt(plaintext : Bytes) : Bytes
     # caclulate block size based on plaintext
     size = plaintext.size + (BLOCK_SIZE - plaintext.size % BLOCK_SIZE)

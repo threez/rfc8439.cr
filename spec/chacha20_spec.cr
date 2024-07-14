@@ -4,9 +4,9 @@ describe Crypto::ChaCha20 do
   it "2.3.2.  Test Vector for the ChaCha20 Block Function" do
     key = "00:01:02:03:04:05:06:07:08:09:0a:0b:0c:0d:0e:0f:10:11:12:13:14:15:16:17:18:19:1a:1b:1c:1d:1e:1f"
     nonce = "00:00:00:09:00:00:00:4a:00:00:00:00"
-    chipher = Crypto::ChaCha20.new(key, nonce, 1)
+    cipher = Crypto::ChaCha20.new(key, nonce, 1)
 
-    bs = chipher.next_key_block
+    bs = cipher.next_key_block
     to_hex(bs).should eq(only_hex("
       e4e7f110  15593bd1  1fdd0f50  c47120a3
       c7f4d1c7  0368c033  9aaa2204  4e6cd4c3
@@ -18,9 +18,9 @@ describe Crypto::ChaCha20 do
   it "2.4.2.  Example and Test Vector for the ChaCha20 Cipher" do
     key = "00:01:02:03:04:05:06:07:08:09:0a:0b:0c:0d:0e:0f:10:11:12:13:14:15:16:17:18:19:1a:1b:1c:1d:1e:1f"
     nonce = "00:00:00:00:00:00:00:4a:00:00:00:00"
-    chipher = Crypto::ChaCha20.new(key, nonce, 1)
+    cipher = Crypto::ChaCha20.new(key, nonce, 1)
 
-    result = chipher.encrypt(parse_hex("
+    result = cipher.encrypt(parse_hex("
       4c 61 64 69 65 73 20 61 6e 64 20 47 65 6e 74 6c
       65 6d 65 6e 20 6f 66 20 74 68 65 20 63 6c 61 73
       73 20 6f 66 20 27 39 39 3a 20 49 66 20 49 20 63
@@ -47,9 +47,9 @@ describe Crypto::ChaCha20 do
     it "Test Vector #1" do
       key = "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
       nonce = "00 00 00 00 00 00 00 00 00 00 00 00"
-      chipher = Crypto::ChaCha20.new(key, nonce, 0)
+      cipher = Crypto::ChaCha20.new(key, nonce, 0)
 
-      bs = chipher.next_key_block
+      bs = cipher.next_key_block
       to_hex(bs).should eq(only_hex("
         ade0b876  903df1a0  e56a5d40  28bd8653
         b819d2bd  1aed8da0  ccef36a8  c70d778b
@@ -61,9 +61,9 @@ describe Crypto::ChaCha20 do
     it "Test Vector #2" do
       key = "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
       nonce = "00 00 00 00 00 00 00 00 00 00 00 00"
-      chipher = Crypto::ChaCha20.new(key, nonce, 1)
+      cipher = Crypto::ChaCha20.new(key, nonce, 1)
 
-      bs = chipher.next_key_block
+      bs = cipher.next_key_block
       to_hex(bs).should eq(only_hex("
         bee7079f  7a385155  7c97ba98  0d082d73
         a0290fcb  6965e348  3e53c612  ed7aee32
@@ -75,9 +75,9 @@ describe Crypto::ChaCha20 do
     it "Test Vector #3" do
       key = "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01"
       nonce = "00 00 00 00 00 00 00 00 00 00 00 00"
-      chipher = Crypto::ChaCha20.new(key, nonce, 1)
+      cipher = Crypto::ChaCha20.new(key, nonce, 1)
 
-      bs = chipher.next_key_block
+      bs = cipher.next_key_block
       to_hex(bs).should eq(only_hex("
         2452eb3a  9249f8ec  8d829d9b  ddd4ceb1
         e8252083  60818b01  f38422b8  5aaa49c9
@@ -89,9 +89,9 @@ describe Crypto::ChaCha20 do
     it "Test Vector #4" do
       key = "00 ff 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
       nonce = "00 00 00 00 00 00 00 00 00 00 00 00"
-      chipher = Crypto::ChaCha20.new(key, nonce, 2)
+      cipher = Crypto::ChaCha20.new(key, nonce, 2)
 
-      bs = chipher.next_key_block
+      bs = cipher.next_key_block
       to_hex(bs).should eq(only_hex("
         fb4dd572  4bc42ef1  df922636  327f1394
         a78dea8f  5e269039  a1bebbc1  caf09aae
@@ -103,9 +103,9 @@ describe Crypto::ChaCha20 do
     it "Test Vector #5" do
       key = "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
       nonce = "00 00 00 00 00 00 00 00 00 00 00 02"
-      chipher = Crypto::ChaCha20.new(key, nonce, 0)
+      cipher = Crypto::ChaCha20.new(key, nonce, 0)
 
-      bs = chipher.next_key_block
+      bs = cipher.next_key_block
       to_hex(bs).should eq(only_hex("
         374dc6c2  3736d58c  b904e24a  cd3f93ef
         88228b1a  96a4dfb3  5b76ab72  c727ee54
@@ -119,9 +119,9 @@ describe Crypto::ChaCha20 do
     it "Test Vector #1" do
       key = "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
       nonce = "00 00 00 00 00 00 00 00 00 00 00 00"
-      chipher = Crypto::ChaCha20.new(key, nonce, 0)
+      cipher = Crypto::ChaCha20.new(key, nonce, 0)
 
-      result = chipher.encrypt(parse_hex("
+      result = cipher.encrypt(parse_hex("
         00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
         00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
         00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
@@ -139,9 +139,9 @@ describe Crypto::ChaCha20 do
     it "Test Vector #2" do
       key = "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01"
       nonce = "00 00 00 00 00 00 00 00 00 00 00 02"
-      chipher = Crypto::ChaCha20.new(key, nonce, 1)
+      cipher = Crypto::ChaCha20.new(key, nonce, 1)
 
-      result = chipher.encrypt(parse_hex("
+      result = cipher.encrypt(parse_hex("
         41 6e 79 20 73 75 62 6d 69 73 73 69 6f 6e 20 74
         6f 20 74 68 65 20 49 45 54 46 20 69 6e 74 65 6e
         64 65 64 20 62 79 20 74 68 65 20 43 6f 6e 74 72
@@ -199,9 +199,9 @@ describe Crypto::ChaCha20 do
     it "Test Vector #3" do
       key = "1c 92 40 a5 eb 55 d3 8a f3 33 88 86 04 f6 b5 f0 47 39 17 c1 40 2b 80 09 9d ca 5c bc 20 70 75 c0"
       nonce = "00 00 00 00 00 00 00 00 00 00 00 02"
-      chipher = Crypto::ChaCha20.new(key, nonce, 42)
+      cipher = Crypto::ChaCha20.new(key, nonce, 42)
 
-      result = chipher.encrypt(parse_hex("
+      result = cipher.encrypt(parse_hex("
         27 54 77 61 73 20 62 72 69 6c 6c 69 67 2c 20 61
         6e 64 20 74 68 65 20 73 6c 69 74 68 79 20 74 6f
         76 65 73 0a 44 69 64 20 67 79 72 65 20 61 6e 64
@@ -231,11 +231,11 @@ describe Crypto::ChaCha20 do
       nonce = "00:00:00:09:00:00:00:4a:00:00:00:00"
       msg = "Hello World".to_slice
 
-      chipher = Crypto::ChaCha20.new(key, nonce)
-      encrypted = chipher.encrypt(msg)
+      cipher = Crypto::ChaCha20.new(key, nonce)
+      encrypted = cipher.encrypt(msg)
 
-      chipher = Crypto::ChaCha20.new(key, nonce)
-      plaintext = chipher.encrypt(encrypted)
+      cipher = Crypto::ChaCha20.new(key, nonce)
+      plaintext = cipher.encrypt(encrypted)
 
       plaintext.should eq(msg)
     end
