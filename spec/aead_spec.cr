@@ -47,7 +47,7 @@ describe Crypto::AeadChacha20Poly1305 do
     aead = Crypto::AeadChacha20Poly1305.new(key, nonce, mem)
 
     aad2 = aead.decrypt(buf, tag)
-    aad.should eq(aad)
+    aad2.should eq(aad)
     mem.to_slice.should eq(plaintext)
   end
 
@@ -59,7 +59,7 @@ describe Crypto::AeadChacha20Poly1305 do
       aead = Crypto::AeadChacha20Poly1305.new(key, nonce, ciphertext)
       aead.aad("Header".to_slice)
       aead.update("Hello World!".to_slice)
-      tag = aead.final
+      aead.final
     end
   end
 end
