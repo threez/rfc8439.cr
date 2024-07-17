@@ -9,7 +9,7 @@ describe Crypto::AeadChacha20Poly1305 do
       90 91 92 93 94 95 96 97 98 99 9a 9b 9c 9d 9e 9f
     ")
     # nonce = 32-bit fixed-common part + IV
-    nonce =  Crypto::Hex.bytes("07 00 00 00 40 41 42 43 44 45 46 47")
+    nonce = Crypto::Hex.bytes("07 00 00 00 40 41 42 43 44 45 46 47")
     aead = Crypto::AeadChacha20Poly1305.new(key, nonce, mem)
 
     aad = Crypto::Hex.bytes("50 51 52 53 c0 c1 c2 c3 c4 c5 c6 c7")
@@ -46,7 +46,8 @@ describe Crypto::AeadChacha20Poly1305 do
     mem = IO::Memory.new
     aead = Crypto::AeadChacha20Poly1305.new(key, nonce, mem)
 
-    aad = aead.decrypt(buf, tag)
+    aad2 = aead.decrypt(buf, tag)
+    aad.should eq(aad2)
     mem.to_slice.should eq(plaintext)
   end
 end

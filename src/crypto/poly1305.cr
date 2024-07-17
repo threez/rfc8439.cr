@@ -14,6 +14,8 @@ class Crypto::Poly1305
   @a : BigInt
   @s : BigInt
 
+  getter key : Bytes
+
   # Generating the Poly1305 Key Using ChaCha20
   def self.chacha20(key : Bytes, nonce : Bytes) : Poly1305
     chacha20(ChaCha20.new(key, nonce))
@@ -37,7 +39,7 @@ class Crypto::Poly1305
 
   # Initializes the Poly1305 context with a given 32-byte **hex-encoded** key.
   # The key should be used only once per message and then discarded.
-  def initialize(@key : String)
+  def initialize(key : String)
     initialize(Crypto::Hex.bytes(key))
   end
 
@@ -89,7 +91,7 @@ class Crypto::Poly1305
     end
 
     Bytes.new(BLOCK_SIZE) do |i|
-      buf[i]
+      buf.fetch(i, 0_u8)
     end
   end
 end
