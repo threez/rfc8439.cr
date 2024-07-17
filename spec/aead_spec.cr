@@ -47,7 +47,19 @@ describe Crypto::AeadChacha20Poly1305 do
     aead = Crypto::AeadChacha20Poly1305.new(key, nonce, mem)
 
     aad2 = aead.decrypt(buf, tag)
-    aad.should eq(aad2)
+    aad.should eq(aad)
     mem.to_slice.should eq(plaintext)
+  end
+
+  describe "example" do
+    it "should work" do
+      key = Crypto::Hex.bytes("00:01:02:03:04:05:06:07:08:09:0a:0b:0c:0d:0e:0f:10:11:12:13:14:15:16:17:18:19:1a:1b:1c:1d:1e:1f")
+      nonce = Crypto::Hex.bytes("00:00:00:09:00:00:00:4a:00:00:00:00")
+      ciphertext = IO::Memory.new
+      aead = Crypto::AeadChacha20Poly1305.new(key, nonce, ciphertext)
+      aead.aad("Header".to_slice)
+      aead.update("Hello World!".to_slice)
+      tag = aead.final
+    end
   end
 end
