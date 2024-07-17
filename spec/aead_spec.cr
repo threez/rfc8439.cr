@@ -42,5 +42,11 @@ describe Crypto::AeadChacha20Poly1305 do
       0c 00 00 00 00 00 00 00 72 00 00 00 00 00 00 00
     "))
     to_hex(tag).should eq(only_hex("1a:e1:0b:59:4f:09:e2:6a:7e:90:2e:cb:d0:60:06:91"))
+
+    mem = IO::Memory.new
+    aead = Crypto::AeadChacha20Poly1305.new(key, nonce, mem)
+
+    aad = aead.decrypt(buf, tag)
+    mem.to_slice.should eq(plaintext)
   end
 end
