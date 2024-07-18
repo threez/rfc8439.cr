@@ -42,8 +42,7 @@ class Crypto::AeadChacha20Poly1305
   # returns the additional authenticated data. The plaintext is
   # written to the provided mem, in case the tag is not validating
   # the data an exception is raised.
-  def decrypt(data : Bytes, tag : Bytes)
-    Bytes
+  def decrypt(data : Bytes, tag : Bytes) : Bytes
     # validate the tag
     @mac.update(data)
     cipher_tag = @mac.final

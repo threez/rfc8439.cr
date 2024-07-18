@@ -1,4 +1,4 @@
-.PHONY: fmt fix lint spec docs clean
+.PHONY: fmt fix lint spec docs clean bench
 
 all: clean fmt fix docs spec
 
@@ -7,6 +7,10 @@ fmt:
 
 spec:
 	crystal spec -v
+
+bench:
+	shards build --release 
+	./bin/bench-chacha2
 
 AMEBA=./lib/ameba/bin/ameba
 
