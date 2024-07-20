@@ -1,16 +1,15 @@
 class Crypto::TagException < Exception; end
 
 # AEAD_CHACHA20_POLY1305 is an authenticated encryption with additional
-# data algorithm.  The inputs to AEAD_CHACHA20_POLY1305 are:
-#
-# * key: A 256-bit key
-# * nonce: A 96-bit nonce -- different for each invocation with the same key
-# * io: the buffer to write the authenticated plain and ciphertext to
+# data algorithm.
 class Crypto::AeadChacha20Poly1305
   # :nodoc:
   BLOCK_SIZE = 16
 
-
+  # The inputs to AEAD_CHACHA20_POLY1305 are:
+  # * key: A 256-bit key
+  # * nonce: A 96-bit nonce -- different for each invocation with the same key
+  # * io: the buffer to write the authenticated plain and ciphertext to
   def initialize(key : Bytes, nonce : Bytes, @io : IO)
     @cipher = Crypto::ChaCha20.new(key, nonce, 1)
     @mac = Crypto::Poly1305.chacha20(@cipher)
