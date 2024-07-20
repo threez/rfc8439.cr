@@ -8,7 +8,9 @@ class Crypto::Poly1305
   # :nodoc:
   CLAMP = 0x0ffffffc0ffffffc0ffffffc0fffffff_u128
   # :nodoc:
-  P = (BigInt.new(2) ** 130) - 5
+  P = (BigInt.new(2) &** 130) &- 5
+  # :nodoc:
+  EB = BigInt.new(0x01_u8) << 16 * 8
 
   @r : BigInt
   @a : BigInt
@@ -47,14 +49,21 @@ class Crypto::Poly1305
   # if different size is used the final block is assumed, further
   # calculations would be incorrect
   def update(msg : Bytes)
+    msg_end = msg.size &- 1
     rounds = (msg.size.to_f / 16).ceil.to_i
     rounds.times do |i|
-      low = i * 16
-      high = [(i + 1)*16 - 1, msg.size - 1].min
+      low = i &* 16
+      high = (i &+ 1) &* 16 &- 1
 
-      n = le_bytes_to_num(msg[low..high], 0x01_u8)
-      @a += n
-      @a = (@r * @a) % P
+      if high < msg_end
+        n = le_bytes_to_num17(msg[low..high])
+      else
+        high = msg_end
+        n = le_bytes_to_num(msg[low..high], 0x01_u8)
+      end
+
+      @a &+= n
+      @a = (@r &* @a) % P
     end
   end
 
@@ -71,27 +80,44 @@ class Crypto::Poly1305
     pa.final
   end
 
+  # le_bytes_to_num17 is the hot path in the #update method
+  # and optimized to reduce the number of big int operations
+  private def le_bytes_to_num17(buf : Bytes) : BigInt
+    acc1 = 0_u64
+    {% for i in 0..8 %}
+    acc1 &+= buf.to_unsafe[{{i}}].to_u64 << {{i * 8}}
+    {% end %}
+
+    acc2 = 0_u64
+    {% for i in 8..15 %}
+    acc2 &+= buf.to_unsafe[{{i}}].to_u64 << {{(i - 8) * 8}}
+    {% end %}
+
+    acc = EB &+ acc1
+    acc &+= BigInt.new(acc2) << {{8*8}}
+    acc
+  end
+
   private def le_bytes_to_num(buf : Bytes, extra_byte : UInt8) : BigInt
     acc = BigInt.new(0)
     buf.each_with_index do |byte, index|
-      acc += BigInt.new(byte) << (index * 8)
+      acc &+= BigInt.new(byte) << (index &* 8)
     end
     if extra_byte
-      acc += BigInt.new(extra_byte) << (buf.size * 8)
+      acc &+= BigInt.new(extra_byte) << (buf.size &* 8)
     end
     acc
   end
 
   private def num_to_le_bytes(num : BigInt)
-    buf = Array(UInt8).new
-
-    while num > 0
-      buf << (num & 0xFF_u64).to_u8
-      num >>= 8
-    end
-
-    Bytes.new(BLOCK_SIZE) do |i|
-      buf.fetch(i, 0_u8)
+    Bytes.new(BLOCK_SIZE) do
+      if num > 0
+        v = (num & 0xFF_u8).to_u8
+        num >>= 8
+        v
+      else
+        0_u8
+      end
     end
   end
 end

@@ -31,10 +31,10 @@ class Crypto::AeadChacha20Poly1305
 
   # write final footer
   def final : Bytes
-    footer = Bytes.new(16, 0)
-    IO::ByteFormat::LittleEndian.encode(@aad_size, footer[0..8])
-    IO::ByteFormat::LittleEndian.encode(@plaintext_size, footer[8..15])
-    write(footer)
+    footer = uninitialized UInt8[16]
+    IO::ByteFormat::LittleEndian.encode(@aad_size, footer.to_slice[0..8])
+    IO::ByteFormat::LittleEndian.encode(@plaintext_size, footer.to_slice[8..15])
+    write(footer.to_slice)
     @mac.final
   end
 
@@ -42,8 +42,7 @@ class Crypto::AeadChacha20Poly1305
   # returns the additional authenticated data. The plaintext is
   # written to the provided mem, in case the tag is not validating
   # the data an exception is raised.
-  def decrypt(data : Bytes, tag : Bytes)
-    Bytes
+  def decrypt(data : Bytes, tag : Bytes) : Bytes
     # validate the tag
     @mac.update(data)
     cipher_tag = @mac.final
@@ -52,7 +51,7 @@ class Crypto::AeadChacha20Poly1305
     end
 
     # read the footer
-    footer = data[(data.size - 16)..]
+    footer = data[(data.size &- 16)..]
     aad_size = IO::ByteFormat::LittleEndian.decode(UInt64, footer[0..8])
     plaintext_size = IO::ByteFormat::LittleEndian.decode(UInt64, footer[8..15])
 
@@ -62,21 +61,21 @@ class Crypto::AeadChacha20Poly1305
     @io.write(@cipher.encrypt(plaintext))
 
     # aad
-    data[0..(aad_size - 1)]
+    data[0..(aad_size &- 1)]
   end
 
   private def write(data : Bytes)
     pad = data.size % 16
 
     if data.size >= 16
-      aligned_data = data[0..(data.size - pad - 1)]
+      aligned_data = data[0..(data.size &- pad &- 1)]
       @io.write(aligned_data)
       @mac.update(aligned_data)
     end
 
     if pad > 0
       data_with_padding = Bytes.new(16, 0)
-      remainder = data[(data.size - pad)..]
+      remainder = data[(data.size &- pad)..]
       Intrinsics.memcpy(data_with_padding.to_unsafe, remainder.to_unsafe, pad, false)
 
       @io.write(data_with_padding)
