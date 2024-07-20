@@ -33,9 +33,9 @@ class Crypto::Poly1305
   # The key should be used only once per message and then discarded.
   def initialize(@key : Bytes)
     raise "key needs to be 256 bits (32 bytes)" if @key.size != 32
-    @r = le_bytes_to_num(key[0..16], 0)
+    @r = BigInt.new(IO::ByteFormat::LittleEndian.decode(UInt128, key[0..16]))
     @r &= CLAMP
-    @s = le_bytes_to_num(key[16..31], 0)
+    @s = BigInt.new(IO::ByteFormat::LittleEndian.decode(UInt128, key[16..31]))
     @a = BigInt.new # accumulator
   end
 
@@ -49,19 +49,19 @@ class Crypto::Poly1305
   # if different size is used the final block is assumed, further
   # calculations would be incorrect
   def update(msg : Bytes)
-    msg_end = msg.size &- 1
-    rounds = (msg.size.to_f / 16).ceil.to_i
+    rounds = msg.size // BLOCK_SIZE
+
+    # all aligned rounds
     rounds.times do |i|
-      low = i &* 16
-      high = (i &+ 1) &* 16 &- 1
+      n = IO::ByteFormat::LittleEndian.decode(UInt128,
+        msg[(i &* BLOCK_SIZE)...((i &+ 1) &* BLOCK_SIZE)])
+      @a &+= EB &+ n
+      @a = (@r &* @a) % P
+    end
 
-      if high < msg_end
-        n = le_bytes_to_num17(msg[low..high])
-      else
-        high = msg_end
-        n = le_bytes_to_num(msg[low..high], 0x01_u8)
-      end
-
+    # final round
+    if msg.size % BLOCK_SIZE != 0
+      n = le_bytes_to_num(msg[(rounds &* BLOCK_SIZE)...(msg.size)], 0x01_u8)
       @a &+= n
       @a = (@r &* @a) % P
     end
@@ -78,24 +78,6 @@ class Crypto::Poly1305
     pa = new(key)
     pa.update(message)
     pa.final
-  end
-
-  # le_bytes_to_num17 is the hot path in the #update method
-  # and optimized to reduce the number of big int operations
-  private def le_bytes_to_num17(buf : Bytes) : BigInt
-    acc1 = 0_u64
-    {% for i in 0..8 %}
-    acc1 &+= buf.to_unsafe[{{i}}].to_u64 << {{i * 8}}
-    {% end %}
-
-    acc2 = 0_u64
-    {% for i in 8..15 %}
-    acc2 &+= buf.to_unsafe[{{i}}].to_u64 << {{(i - 8) * 8}}
-    {% end %}
-
-    acc = EB &+ acc1
-    acc &+= BigInt.new(acc2) << {{8*8}}
-    acc
   end
 
   private def le_bytes_to_num(buf : Bytes, extra_byte : UInt8) : BigInt
