@@ -1,12 +1,15 @@
 class Crypto::TagException < Exception; end
 
 # AEAD_CHACHA20_POLY1305 is an authenticated encryption with additional
-# data algorithm.  The inputs to AEAD_CHACHA20_POLY1305 are:
-#
-# * key: A 256-bit key
-# * nonce: A 96-bit nonce -- different for each invocation with the same key
-# * io: the buffer to write the authenticated plain and ciphertext to
+# data algorithm.
 class Crypto::AeadChacha20Poly1305
+  # :nodoc:
+  BLOCK_SIZE = 16
+
+  # The inputs to AEAD_CHACHA20_POLY1305 are:
+  # * key: A 256-bit key
+  # * nonce: A 96-bit nonce -- different for each invocation with the same key
+  # * io: the buffer to write the authenticated plain and ciphertext to
   def initialize(key : Bytes, nonce : Bytes, @io : IO)
     @cipher = Crypto::ChaCha20.new(key, nonce, 1)
     @mac = Crypto::Poly1305.chacha20(@cipher)
@@ -31,7 +34,7 @@ class Crypto::AeadChacha20Poly1305
 
   # write final footer
   def final : Bytes
-    footer = uninitialized UInt8[16]
+    footer = uninitialized UInt8[BLOCK_SIZE]
     IO::ByteFormat::LittleEndian.encode(@aad_size, footer.to_slice[0..8])
     IO::ByteFormat::LittleEndian.encode(@plaintext_size, footer.to_slice[8..15])
     write(footer.to_slice)
@@ -51,13 +54,13 @@ class Crypto::AeadChacha20Poly1305
     end
 
     # read the footer
-    footer = data[(data.size &- 16)..]
+    footer = data[(data.size &- BLOCK_SIZE)..]
     aad_size = IO::ByteFormat::LittleEndian.decode(UInt64, footer[0..8])
     plaintext_size = IO::ByteFormat::LittleEndian.decode(UInt64, footer[8..15])
 
     # read the plaintext
-    pad = 16 - (aad_size % 16)
-    plaintext = data[(aad_size + pad)..(aad_size + pad + plaintext_size - 1)]
+    pad = BLOCK_SIZE &- (aad_size % BLOCK_SIZE)
+    plaintext = data[(aad_size + pad)..(aad_size &+ pad &+ plaintext_size &- 1)]
     @io.write(@cipher.encrypt(plaintext))
 
     # aad
@@ -65,18 +68,18 @@ class Crypto::AeadChacha20Poly1305
   end
 
   private def write(data : Bytes)
-    pad = data.size % 16
+    pad = data.size % BLOCK_SIZE
 
-    if data.size >= 16
+    if data.size >= BLOCK_SIZE
       aligned_data = data[0..(data.size &- pad &- 1)]
       @io.write(aligned_data)
       @mac.update(aligned_data)
     end
 
     if pad > 0
-      data_with_padding = Bytes.new(16, 0)
+      data_with_padding = Bytes.new(BLOCK_SIZE, 0_u8)
       remainder = data[(data.size &- pad)..]
-      Intrinsics.memcpy(data_with_padding.to_unsafe, remainder.to_unsafe, pad, false)
+      data_with_padding.copy_from(remainder)
 
       @io.write(data_with_padding)
       @mac.update(data_with_padding)

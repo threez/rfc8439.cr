@@ -4,6 +4,7 @@
 # platforms that lack specialized AES hardware.
 # ChaCha20 is also not sensitive to timing attacks.
 class Crypto::ChaCha20
+  # :nodoc:
   BLOCK_SIZE = 64
 
   # The inputs to ChaCha20 are:
@@ -84,7 +85,7 @@ class Crypto::ChaCha20
     raise "encrypted needs to be multiple of #{BLOCK_SIZE}" unless encrypted.size % BLOCK_SIZE == 0
 
     block_state = uninitialized UInt32[16]
-    Intrinsics.memcpy(encrypted.to_unsafe, plaintext.to_unsafe, plaintext.size, false)
+    encrypted.copy_from(plaintext)
 
     (encrypted.size // BLOCK_SIZE).times do |pos|
       key_block = next_key_block(block_state).to_unsafe
@@ -112,9 +113,9 @@ class Crypto::ChaCha20
 
   # :nodoc:
   # returns the next key block
-  def next_key_block(block_state : StaticArray(UInt32, 16) = StaticArray(UInt32, 16).new(0u32)) : StaticArray(UInt32, 16)
+  def next_key_block(block_state : UInt32[16] = StaticArray(UInt32, 16).new(0u32)) : UInt32[16]
     # initialize block state
-    Intrinsics.memcpy(block_state.to_unsafe, @state.to_unsafe, BLOCK_SIZE, false)
+    block_state.to_slice.copy_from(@state.to_slice)
 
     # perform inner blocks 10 times
     10.times do
@@ -144,21 +145,13 @@ class Crypto::ChaCha20
 
   private def quarter_round(state : Slice(UInt32), a, b, c, d)
     state[a] &+= state[b]
-    state[d] = rotl((state[d] ^ state[a]), 16)
+    state[d] = (state[d] ^ state[a]).rotate_left(16)
     state[c] &+= state[d]
-    state[b] = rotl((state[b] ^ state[c]), 12)
+    state[b] = (state[b] ^ state[c]).rotate_left(12)
     state[a] &+= state[b]
-    state[d] = rotl((state[d] ^ state[a]), 8)
+    state[d] = (state[d] ^ state[a]).rotate_left(8)
     state[c] &+= state[d]
-    state[b] = rotl((state[b] ^ state[c]), 7)
-  end
-
-  # :nodoc:
-  # bitwise rotation (or circular shift) operation. It’s named rotl,
-  # which stands for “rotate left {{n}}-bit”.
-  # The rotation is performed by n places.
-  macro rotl(v, n)
-    ({{v}} << {{n}}) | ({{v}} >> (32_u32 &- {{n}}))
+    state[b] = (state[b] ^ state[c]).rotate_left(7)
   end
 
   # reset the counter
@@ -168,7 +161,7 @@ class Crypto::ChaCha20
 
   # :nodoc:
   # converts a block to bytes
-  def self.block_bytes(block : StaticArray(UInt32, 16), be : Bool = true) : Bytes
+  def self.block_bytes(block : UInt32[16], be : Bool = true) : Bytes
     block_bytes = Bytes.new(block.size &* 4)
     block.each_with_index do |val, i|
       block_slice = block_bytes[(i &* 4)..((i &+ 1) &* 4 &- 1)]
