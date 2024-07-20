@@ -90,10 +90,11 @@ class Crypto::ChaCha20
     (encrypted.size // BLOCK_SIZE).times do |pos|
       key_block = next_key_block(block_state)
       16.times do |i|
-        encrypted[pos*BLOCK_SIZE + i*4] ^= (key_block[i] >> 0 * 8) & 0xff_u8
-        encrypted[pos*BLOCK_SIZE + i*4 + 1] ^= (key_block[i] >> 1 * 8) & 0xff_u8
-        encrypted[pos*BLOCK_SIZE + i*4 + 2] ^= (key_block[i] >> 2 * 8) & 0xff_u8
-        encrypted[pos*BLOCK_SIZE + i*4 + 3] ^= (key_block[i] >> 3 * 8) & 0xff_u8
+        offset = pos*BLOCK_SIZE &+ i&*4
+        encrypted[offset] ^= (key_block[i] >> 0 &* 8) & 0xff_u8
+        encrypted[offset &+ 1] ^= (key_block[i] >> 1 &* 8) & 0xff_u8
+        encrypted[offset &+ 2] ^= (key_block[i] >> 2 &* 8) & 0xff_u8
+        encrypted[offset &+ 3] ^= (key_block[i] >> 3 &* 8) & 0xff_u8
       end
     end
   end
@@ -134,7 +135,10 @@ class Crypto::ChaCha20
     end
 
     # increment block counter
-    @state[12] += 1
+    @state[12] &+= 1
+    if @state[12] == 0
+      raise "counter overflow, more then 256 GB encrypted"
+    end
 
     block_state
   end
@@ -155,7 +159,7 @@ class Crypto::ChaCha20
   # which stands for “rotate left {{n}}-bit”.
   # The rotation is performed by n places.
   macro rotl(v, n)
-    ({{v}} << {{n}}) | ({{v}} >> (32_u32 - {{n}}))
+    ({{v}} << {{n}}) | ({{v}} >> (32_u32 &- {{n}}))
   end
 
   # reset the counter
@@ -166,9 +170,9 @@ class Crypto::ChaCha20
   # :nodoc:
   # converts a block to bytes
   def self.block_bytes(block : StaticArray(UInt32, 16), be : Bool = true) : Bytes
-    block_bytes = Bytes.new(block.size * 4)
+    block_bytes = Bytes.new(block.size &* 4)
     block.each_with_index do |val, i|
-      block_slice = block_bytes[(i*4)..((i + 1)*4 - 1)]
+      block_slice = block_bytes[(i&*4)..((i &+ 1)&*4 &- 1)]
       if be
         IO::ByteFormat::BigEndian.encode(val, block_slice)
       else

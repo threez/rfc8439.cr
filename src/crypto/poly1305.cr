@@ -8,7 +8,7 @@ class Crypto::Poly1305
   # :nodoc:
   CLAMP = 0x0ffffffc0ffffffc0ffffffc0fffffff_u128
   # :nodoc:
-  P = (BigInt.new(2) ** 130) - 5
+  P = (BigInt.new(2) &** 130) &- 5
 
   @r : BigInt
   @a : BigInt
@@ -49,12 +49,12 @@ class Crypto::Poly1305
   def update(msg : Bytes)
     rounds = (msg.size.to_f / 16).ceil.to_i
     rounds.times do |i|
-      low = i * 16
-      high = [(i + 1)*16 - 1, msg.size - 1].min
+      low = i &* 16
+      high = [(i &+ 1)&*16 &- 1, msg.size &- 1].min
 
       n = le_bytes_to_num(msg[low..high], 0x01_u8)
-      @a += n
-      @a = (@r * @a) % P
+      @a &+= n
+      @a = (@r &* @a) % P
     end
   end
 
@@ -74,10 +74,10 @@ class Crypto::Poly1305
   private def le_bytes_to_num(buf : Bytes, extra_byte : UInt8) : BigInt
     acc = BigInt.new(0)
     buf.each_with_index do |byte, index|
-      acc += BigInt.new(byte) << (index * 8)
+      acc += BigInt.new(byte) << (index &* 8)
     end
     if extra_byte
-      acc += BigInt.new(extra_byte) << (buf.size * 8)
+      acc += BigInt.new(extra_byte) << (buf.size &* 8)
     end
     acc
   end
