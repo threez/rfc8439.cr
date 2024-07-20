@@ -31,10 +31,10 @@ class Crypto::AeadChacha20Poly1305
 
   # write final footer
   def final : Bytes
-    footer = Bytes.new(16, 0)
-    IO::ByteFormat::LittleEndian.encode(@aad_size, footer[0..8])
-    IO::ByteFormat::LittleEndian.encode(@plaintext_size, footer[8..15])
-    write(footer)
+    footer = uninitialized UInt8[16]
+    IO::ByteFormat::LittleEndian.encode(@aad_size, footer.to_slice[0..8])
+    IO::ByteFormat::LittleEndian.encode(@plaintext_size, footer.to_slice[8..15])
+    write(footer.to_slice)
     @mac.final
   end
 

@@ -50,7 +50,7 @@ class Crypto::Poly1305
     rounds = (msg.size.to_f / 16).ceil.to_i
     rounds.times do |i|
       low = i &* 16
-      high = [(i &+ 1)&*16 &- 1, msg.size &- 1].min
+      high = [(i &+ 1) &* 16 &- 1, msg.size &- 1].min
 
       n = le_bytes_to_num(msg[low..high], 0x01_u8)
       @a &+= n
