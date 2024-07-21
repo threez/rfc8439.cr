@@ -59,8 +59,10 @@ class Crypto::AeadChacha20Poly1305
     plaintext_size = IO::ByteFormat::LittleEndian.decode(UInt64, footer[8..15])
 
     # read the plaintext
-    pad = BLOCK_SIZE &- (aad_size % BLOCK_SIZE)
-    plaintext = data[(aad_size + pad)..(aad_size &+ pad &+ plaintext_size &- 1)]
+    pad = aad_size % BLOCK_SIZE
+    offset = aad_size
+    offset += BLOCK_SIZE &- pad if pad != 0
+    plaintext = data[offset...(offset &+ plaintext_size)]
     @io.write(@cipher.encrypt(plaintext))
 
     # aad
