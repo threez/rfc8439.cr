@@ -51,15 +51,33 @@ describe Crypto::AeadChacha20Poly1305 do
     mem.to_slice.should eq(plaintext)
   end
 
-  describe "example" do
-    it "should work" do
-      key = Crypto::Hex.bytes("00:01:02:03:04:05:06:07:08:09:0a:0b:0c:0d:0e:0f:10:11:12:13:14:15:16:17:18:19:1a:1b:1c:1d:1e:1f")
-      nonce = Crypto::Hex.bytes("00:00:00:09:00:00:00:4a:00:00:00:00")
-      ciphertext = IO::Memory.new
-      aead = Crypto::AeadChacha20Poly1305.new(key, nonce, ciphertext)
-      aead.aad("Header".to_slice)
-      aead.update("Hello World!".to_slice)
-      aead.final
+  describe "alignment" do
+    key = Crypto::Hex.bytes("00:01:02:03:04:05:06:07:08:09:0a:0b:0c:0d:0e:0f:10:11:12:13:14:15:16:17:18:19:1a:1b:1c:1d:1e:1f")
+    nonce = Crypto::Hex.bytes("00:00:00:09:00:00:00:4a:00:00:00:00")
+    aligned = Crypto::Hex.bytes("01:23:45:67:89:ab:cd:ef:01:23:45:67:89:ab:cd:ef")
+    unaligned = "Hello World!".to_slice
+
+    test_cases = [
+      {"aligned   - unaligned", aligned, unaligned},
+      {"unaligned -   aligned", unaligned, aligned},
+      {"aligned   -   aligned", aligned, aligned},
+      {"unaligned - unaligned", unaligned, unaligned},
+    ]
+
+    test_cases.each do |name, aad, data|
+      it name do
+        ciphertext = IO::Memory.new
+        aead = Crypto::AeadChacha20Poly1305.new(key, nonce, ciphertext)
+        aead.aad(aad)
+        aead.update(data)
+        tag = aead.final
+
+        plaintext = IO::Memory.new
+        aead = Crypto::AeadChacha20Poly1305.new(key, nonce, plaintext)
+        aad_out = aead.decrypt(ciphertext.to_slice, tag)
+        aad_out.should eq(aad)
+        plaintext.to_slice.should eq(data)
+      end
     end
   end
 end
