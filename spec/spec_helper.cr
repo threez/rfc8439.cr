@@ -6,7 +6,7 @@ def only_hex(input : String) : String
 end
 
 def to_hex(block : StaticArray(UInt32, 16)) : String
-  to_hex(Crypto::ChaCha20.block_bytes(block)).downcase
+  to_hex(Crypto::ChaCha20.block_bytes(block))
 end
 
 def to_hex(raw) : String
