@@ -121,8 +121,8 @@ class Crypto::Poly1305::Fast < Crypto::Poly1305::MAC
 
     # Full carry chain to normalize limbs
     c = h0 >> 44; h0 &= MASK44
-    h1 &+= c;    c = h1 >> 44; h1 &= MASK44
-    h2 &+= c;    c = h2 >> 42; h2 &= MASK42
+    h1 &+= c; c = h1 >> 44; h1 &= MASK44
+    h2 &+= c; c = h2 >> 42; h2 &= MASK42
     h0 &+= c &* 5; c = h0 >> 44; h0 &= MASK44
     h1 &+= c
 
@@ -133,7 +133,7 @@ class Crypto::Poly1305::Fast < Crypto::Poly1305::MAC
     g2 = h2 &+ c &- (1_u64 << 42)
 
     # If g2 bit 63 is set (negative / underflow), h < p → keep h; otherwise use g
-    mask = (g2 >> 63) &- 1  # 0 if g2 negative (keep h), all-ones if g >= 0 (use g)
+    mask = (g2 >> 63) &- 1 # 0 if g2 negative (keep h), all-ones if g >= 0 (use g)
     g0 &= mask
     g1 &= mask
     g2 &= mask
@@ -177,8 +177,8 @@ class Crypto::Poly1305::Fast < Crypto::Poly1305::MAC
 
     # Carry propagation
     c = d0 >> 44; @h0 = d0.to_u64! & MASK44
-    d1 &+= c;    c = d1 >> 44; @h1 = d1.to_u64! & MASK44
-    d2 &+= c;    c = d2 >> 42; @h2 = d2.to_u64! & MASK42
+    d1 &+= c; c = d1 >> 44; @h1 = d1.to_u64! & MASK44
+    d2 &+= c; c = d2 >> 42; @h2 = d2.to_u64! & MASK42
 
     # Top carry × 5 feeds back into h0 (since 2^130 ≡ 5 mod p)
     @h0 &+= c.to_u64! &* 5
