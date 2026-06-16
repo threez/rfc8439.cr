@@ -15,10 +15,8 @@ ChaCha20::Cipher (abstract)          Poly1305::MAC (abstract)
 
 **Compile-time priority:**
 
-| Component | 1st choice | 2nd choice | 3rd choice |
-|---|---|---|---|
-| ChaCha20 | OpenSSL (>= 1.1.0) | Neon (aarch64) | Native |
-| Poly1305 | OpenSSL (>= 3.0.0) | Fast | - |
+- **ChaCha20**: 1st OpenSSL (≥ 1.1.0), 2nd Neon (aarch64), 3rd Native
+- **Poly1305**: 1st OpenSSL (≥ 3.0.0), 2nd Fast
 
 The factory methods (`Crypto::ChaCha20.new`, `Crypto::Poly1305.new`, `Crypto::Poly1305.chacha20`) return the abstract type using `Default`, so callers program against the common interface. You can also instantiate a specific backend directly (e.g. `Crypto::ChaCha20::Native.new`).
 
@@ -109,14 +107,12 @@ AEAD_CHACHA20_POLY1305 (64MB)   0.047310   0.000826   0.048136 (  0.048204)
 
 **Throughput (real time):**
 
-| Backend | Throughput |
-|---|---|
-| ChaCha20 Native | ~654 MB/s |
-| ChaCha20 NEON | ~1.24 GB/s |
-| ChaCha20 OpenSSL | ~1.86 GB/s |
-| Poly1305 Native | ~118 MB/s |
-| Poly1305 Fast | ~1.58 GB/s |
-| Poly1305 OpenSSL | ~6.23 GB/s |
+- ChaCha20 Native — ~654 MB/s
+- ChaCha20 NEON — ~1.24 GB/s
+- ChaCha20 OpenSSL — ~1.86 GB/s
+- Poly1305 Native — ~118 MB/s
+- Poly1305 Fast — ~1.58 GB/s
+- Poly1305 OpenSSL — ~6.23 GB/s
 
 Run benchmarks yourself:
 
