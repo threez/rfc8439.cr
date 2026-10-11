@@ -90,6 +90,30 @@ tag = aead.final
 puts tag
 ```
 
+#### One-shot encrypt/decrypt
+
+For protocols that need a single `encrypt(plaintext, aad) -> {ciphertext, tag}`
+call per message instead of the streaming interface above — such as
+protecting one TLS 1.3 record (RFC 8446 section 5.2) — use the class
+methods instead. This library does not construct the per-record nonce
+for you: per RFC 8446 section 5.3 it is the connection's fixed IV
+XORed with the big-endian, zero left-padded 64-bit record sequence
+number.
+
+```crystal
+require "rfc8439"
+
+key = Crypto::Hex.bytes("00:01:02:03:04:05:06:07:08:09:0a:0b:0c:0d:0e:0f:10:11:12:13:14:15:16:17:18:19:1a:1b:1c:1d:1e:1f")
+nonce = Crypto::Hex.bytes("00:00:00:09:00:00:00:4a:00:00:00:00")
+aad = "Header".to_slice
+plaintext = "Hello World!".to_slice
+
+ciphertext, tag = Crypto::AeadChacha20Poly1305.encrypt(key, nonce, aad, plaintext)
+
+# raises Crypto::TagException if tag does not match aad/ciphertext
+decrypted = Crypto::AeadChacha20Poly1305.decrypt(key, nonce, aad, ciphertext, tag)
+```
+
 ## Benchmarks
 
 Measured on Apple M1 Pro, Crystal 1.19.1, OpenSSL 3.6.1, compiled with `--release`:

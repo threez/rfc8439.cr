@@ -69,6 +69,58 @@ class Crypto::AeadChacha20Poly1305
     data[0..(aad_size &- 1)]
   end
 
+  # One-shot form of AEAD_CHACHA20_POLY1305 as specified in RFC 8439
+  # section 2.8, as an alternative to the streaming/IO based instance
+  # interface above. Useful whenever a protocol needs a plain
+  # `encrypt(plaintext, aad) -> {ciphertext, tag}` call per message,
+  # such as protecting a single TLS 1.3 record (RFC 8446 section 5.2).
+  #
+  # This method does not construct the per-record nonce for you: per
+  # RFC 8446 section 5.3 it is the connection's fixed IV XORed with the
+  # big-endian, zero left-padded 64-bit record sequence number.
+  #
+  # Returns the ciphertext (same length as plaintext) and the 16-byte
+  # authentication tag.
+  def self.encrypt(key : Bytes, nonce : Bytes, aad : Bytes, plaintext : Bytes) : {Bytes, Bytes}
+    ciphertext = Crypto::ChaCha20.new(key, nonce, 1_u32).encrypt(plaintext)
+    {ciphertext, mac(key, nonce, aad, ciphertext)}
+  end
+
+  # The inverse of `.encrypt`. Verifies `tag` against `aad` and
+  # `ciphertext` before decrypting, raising `TagException` when it does
+  # not match.
+  def self.decrypt(key : Bytes, nonce : Bytes, aad : Bytes, ciphertext : Bytes, tag : Bytes) : Bytes
+    calculated_tag = mac(key, nonce, aad, ciphertext)
+    if tag != calculated_tag
+      raise TagException.new("mismatching tag for cipher text")
+    end
+    Crypto::ChaCha20.new(key, nonce, 1_u32).encrypt(ciphertext)
+  end
+
+  # :nodoc:
+  # number of zero bytes needed to pad size up to the next 16 byte boundary
+  private def self.pad16(size : Int) : Int
+    (BLOCK_SIZE &- (size % BLOCK_SIZE)) % BLOCK_SIZE
+  end
+
+  # :nodoc:
+  # computes the RFC 8439 section 2.8 authentication tag for aad/ciphertext
+  # without writing either of them anywhere
+  private def self.mac(key : Bytes, nonce : Bytes, aad : Bytes, ciphertext : Bytes) : Bytes
+    mac = Crypto::Poly1305.chacha20(key, nonce)
+    mac.update(aad)
+    mac.update(Bytes.new(pad16(aad.size), 0_u8))
+    mac.update(ciphertext)
+    mac.update(Bytes.new(pad16(ciphertext.size), 0_u8))
+
+    lengths = uninitialized UInt8[BLOCK_SIZE]
+    IO::ByteFormat::LittleEndian.encode(aad.size.to_u64, lengths.to_slice[0, 8])
+    IO::ByteFormat::LittleEndian.encode(ciphertext.size.to_u64, lengths.to_slice[8, 8])
+    mac.update(lengths.to_slice)
+
+    mac.final
+  end
+
   private def write(data : Bytes)
     pad = data.size % BLOCK_SIZE
 
