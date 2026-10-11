@@ -1,11 +1,11 @@
 require "./spec_helper"
 
 macro chacha20_specs(name, klass)
-  describe {{name}} do
+  describe {{ name }} do
     it "2.3.2. Test Vector for the ChaCha20 Block Function" do
       key = "00:01:02:03:04:05:06:07:08:09:0a:0b:0c:0d:0e:0f:10:11:12:13:14:15:16:17:18:19:1a:1b:1c:1d:1e:1f"
       nonce = "00:00:00:09:00:00:00:4a:00:00:00:00"
-      cipher = {{klass}}.new(key, nonce, 1)
+      cipher = {{ klass }}.new(key, nonce, 1)
 
       bs = cipher.next_key_block
       to_hex(bs).should eq(only_hex("
@@ -19,7 +19,7 @@ macro chacha20_specs(name, klass)
     it "2.4.2. Example and Test Vector for the ChaCha20 Cipher" do
       key = "00:01:02:03:04:05:06:07:08:09:0a:0b:0c:0d:0e:0f:10:11:12:13:14:15:16:17:18:19:1a:1b:1c:1d:1e:1f"
       nonce = "00:00:00:00:00:00:00:4a:00:00:00:00"
-      cipher = {{klass}}.new(key, nonce, 1)
+      cipher = {{ klass }}.new(key, nonce, 1)
 
       result = cipher.encrypt(parse_hex("
         4c 61 64 69 65 73 20 61 6e 64 20 47 65 6e 74 6c
@@ -48,7 +48,7 @@ macro chacha20_specs(name, klass)
       it "Test Vector #1" do
         key = "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
         nonce = "00 00 00 00 00 00 00 00 00 00 00 00"
-        cipher = {{klass}}.new(key, nonce, 0)
+        cipher = {{ klass }}.new(key, nonce, 0)
 
         bs = cipher.next_key_block
         to_hex(bs).should eq(only_hex("
@@ -62,7 +62,7 @@ macro chacha20_specs(name, klass)
       it "Test Vector #2" do
         key = "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
         nonce = "00 00 00 00 00 00 00 00 00 00 00 00"
-        cipher = {{klass}}.new(key, nonce, 1)
+        cipher = {{ klass }}.new(key, nonce, 1)
 
         bs = cipher.next_key_block
         to_hex(bs).should eq(only_hex("
@@ -76,7 +76,7 @@ macro chacha20_specs(name, klass)
       it "Test Vector #3" do
         key = "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01"
         nonce = "00 00 00 00 00 00 00 00 00 00 00 00"
-        cipher = {{klass}}.new(key, nonce, 1)
+        cipher = {{ klass }}.new(key, nonce, 1)
 
         bs = cipher.next_key_block
         to_hex(bs).should eq(only_hex("
@@ -90,7 +90,7 @@ macro chacha20_specs(name, klass)
       it "Test Vector #4" do
         key = "00 ff 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
         nonce = "00 00 00 00 00 00 00 00 00 00 00 00"
-        cipher = {{klass}}.new(key, nonce, 2)
+        cipher = {{ klass }}.new(key, nonce, 2)
 
         bs = cipher.next_key_block
         to_hex(bs).should eq(only_hex("
@@ -104,7 +104,7 @@ macro chacha20_specs(name, klass)
       it "Test Vector #5" do
         key = "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
         nonce = "00 00 00 00 00 00 00 00 00 00 00 02"
-        cipher = {{klass}}.new(key, nonce, 0)
+        cipher = {{ klass }}.new(key, nonce, 0)
 
         bs = cipher.next_key_block
         to_hex(bs).should eq(only_hex("
@@ -120,7 +120,7 @@ macro chacha20_specs(name, klass)
       it "Test Vector #1" do
         key = "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00"
         nonce = "00 00 00 00 00 00 00 00 00 00 00 00"
-        cipher = {{klass}}.new(key, nonce, 0)
+        cipher = {{ klass }}.new(key, nonce, 0)
 
         result = cipher.encrypt(parse_hex("
           00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00
@@ -140,7 +140,7 @@ macro chacha20_specs(name, klass)
       it "Test Vector #2" do
         key = "00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 01"
         nonce = "00 00 00 00 00 00 00 00 00 00 00 02"
-        cipher = {{klass}}.new(key, nonce, 1)
+        cipher = {{ klass }}.new(key, nonce, 1)
 
         result = cipher.encrypt(parse_hex("
           41 6e 79 20 73 75 62 6d 69 73 73 69 6f 6e 20 74
@@ -200,7 +200,7 @@ macro chacha20_specs(name, klass)
       it "Test Vector #3" do
         key = "1c 92 40 a5 eb 55 d3 8a f3 33 88 86 04 f6 b5 f0 47 39 17 c1 40 2b 80 09 9d ca 5c bc 20 70 75 c0"
         nonce = "00 00 00 00 00 00 00 00 00 00 00 02"
-        cipher = {{klass}}.new(key, nonce, 42)
+        cipher = {{ klass }}.new(key, nonce, 42)
 
         result = cipher.encrypt(parse_hex("
           27 54 77 61 73 20 62 72 69 6c 6c 69 67 2c 20 61
@@ -232,10 +232,10 @@ macro chacha20_specs(name, klass)
         nonce = "00:00:00:09:00:00:00:4a:00:00:00:00"
         msg = "Hello World".to_slice
 
-        cipher = {{klass}}.new(key, nonce)
+        cipher = {{ klass }}.new(key, nonce)
         encrypted = cipher.encrypt(msg)
 
-        cipher = {{klass}}.new(key, nonce)
+        cipher = {{ klass }}.new(key, nonce)
         plaintext = cipher.encrypt(encrypted)
 
         plaintext.should eq(msg)
